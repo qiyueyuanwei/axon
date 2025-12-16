@@ -1,0 +1,101 @@
+# RTSP 推流配置示例
+# 保存路径: /Users/shark/dl/axon/src/axon/cfg/rtsp.yaml
+
+rtsp_push:
+  enabled: true           # 是否启用推流
+  default_destination:
+    scheme: rtsp
+    host: 192.168.1.100
+    port: 554
+    app: live
+    stream: camera01
+    # 完整URI 示例: rtsp://user:pass@192.168.1.100:554/live/camera01
+    username: user
+    password: pass
+    auth_method: basic    # basic | digest | none
+    transport: tcp        # tcp | udp | multicast
+    use_tls: false
+    tls_options:
+      verify_peer: false
+      ca_file: ""
+  # 连接与重试策略
+  connection:
+    connect_timeout_ms: 5000
+    read_timeout_ms: 10000
+    write_timeout_ms: 5000
+    keepalive_interval_s: 20
+    reconnect:
+      enabled: true
+      initial_delay_s: 1
+      max_delay_s: 60
+      max_attempts: 0       # 0 表示无限重试
+      backoff_factor: 2.0
+
+  # 视频编码与推流参数
+  video:
+    enabled: true
+    codec: h264              # h264 | h265 | mjpeg
+    profile: baseline       # baseline | main | high
+    level: "4.0"
+    bitrate_kbps: 2000      # 平均码率 (kbps)
+    max_bitrate_kbps: 2500
+    min_bitrate_kbps: 500
+    rate_control: cbr       # cbr | vbr
+    fps: 25
+    gop_size: 50            # I 帧间隔 (帧数)，相当于 keyframe interval
+    resolution:
+      width: 1280
+      height: 720
+      enforce: true
+    rtp:
+      payload_type: 96
+      packetization_mode: 1  # 0 | 1
+      mtu: 1400
+      rtp_buffer_ms: 200
+
+  # 音频编码与推流参数
+  audio:
+    enabled: true
+    codec: aac              # aac | opus | pcmu | pcma
+    profile: aac-lc
+    bitrate_kbps: 128
+    sample_rate_hz: 48000
+    channels: 2
+    rtp:
+      payload_type: 97
+      packetization_ms: 20
+
+  # 多路流/流定义（可选）
+  streams:
+    - id: main
+      description: 主码流（720p）
+      destination:
+        stream: camera01_main
+      video:
+        resolution: {width: 1280, height: 720}
+        bitrate_kbps: 2000
+        fps: 25
+    - id: sub
+      description: 子码流（360p）
+      destination:
+        stream: camera01_sub
+      video:
+        resolution: {width: 640, height: 360}
+        bitrate_kbps: 600
+        fps: 15
+      audio:
+        enabled: false
+
+  # 高级调优
+  advanced:
+    jitter_buffer_ms: 100
+    sdp:
+      generate_sdp: true
+      sdp_attributes: []   # 额外 SDP 配置项
+    heartbeat:
+      enabled: true
+      interval_s: 30
+      path: /heartbeat
+    logging:
+      level: info          # debug | info | warn | error
+      file: /var/log/axon/rtsp_push.log
