@@ -1,6 +1,7 @@
 from axon.utils.cpu import CPUInfo
 
-
+def add(a:int,b:int): 
+    return a+b
 
 
 
